@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* GainChain — Athletic Dark Tech Design System
+   All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Dark by default — GainChain is always dark */
+    --background: 0 0% 4%;            /* #0A0A0A */
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 7%;                  /* #111111 */
+    --card-elevated: 0 0% 10%;        /* #1A1A1A */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 150 100% 50%;          /* #00FF87 neon green */
+    --primary-foreground: 0 0% 4%;
+    --primary-glow: 150 100% 60%;
+    --primary-deep: 150 100% 40%;     /* #00CC6A */
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 53%;     /* #888 */
+
+    --accent: 51 100% 50%;            /* #FFD700 gold */
+    --accent-foreground: 0 0% 4%;
+
+    --destructive: 0 100% 64%;        /* #FF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 150 100% 50%;
+    --warning: 51 100% 50%;
+    --danger: 0 100% 64%;
+
+    --border: 0 0% 13%;               /* #222 */
+    --input: 0 0% 13%;
+    --ring: 150 100% 50%;
+
+    --radius: 0.875rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(150 100% 50%), hsl(150 100% 40%));
+    --gradient-gold: linear-gradient(135deg, hsl(51 100% 60%), hsl(43 100% 45%));
+    --gradient-bronze: linear-gradient(135deg, hsl(28 70% 55%), hsl(20 60% 35%));
+    --gradient-silver: linear-gradient(135deg, hsl(0 0% 85%), hsl(0 0% 55%));
+    --gradient-diamond: linear-gradient(135deg, hsl(190 100% 70%), hsl(270 80% 70%), hsl(150 100% 60%));
+    --gradient-radial-glow: radial-gradient(circle at 50% 0%, hsl(150 100% 50% / 0.15), transparent 70%);
+
+    /* Owner / purple accent */
+    --owner: 270 90% 65%;
+    --owner-foreground: 0 0% 100%;
+    --owner-deep: 265 80% 50%;
+    --gradient-owner: linear-gradient(135deg, hsl(270 90% 65%), hsl(265 80% 50%));
+    --glow-owner: 0 0 24px hsl(270 90% 65% / 0.45), 0 0 48px hsl(270 90% 65% / 0.2);
+    --glow-owner-soft: 0 0 16px hsl(270 90% 65% / 0.25);
+
+    /* Shadows / Glows */
+    --glow-primary: 0 0 24px hsl(150 100% 50% / 0.45), 0 0 48px hsl(150 100% 50% / 0.2);
+    --glow-primary-soft: 0 0 16px hsl(150 100% 50% / 0.25);
+    --glow-gold: 0 0 24px hsl(51 100% 50% / 0.45);
+    --glow-danger: 0 0 16px hsl(0 100% 64% / 0.35);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 150 100% 50%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 13%;
+    --sidebar-ring: 150 100% 50%;
+  }
+
+  .dark {
+    /* Same as root — site is always dark */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 150 100% 50%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 51 100% 50%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 0 100% 64%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 13%;
+    --input: 0 0% 13%;
+    --ring: 150 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply dark;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* Subtle grid background */
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .bg-grid-fade {
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 30%, transparent 80%);
+  }
+
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+}
+
+@layer components {
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-gold);
+  }
+
+  .glow-border {
+    box-shadow: var(--glow-primary-soft), inset 0 1px 0 hsl(0 0% 100% / 0.04);
+  }
+
+  .glow-border-strong {
+    box-shadow: var(--glow-primary);
+  }
+
+  .glass-card {
+    background: linear-gradient(180deg, hsl(0 0% 10% / 0.7), hsl(0 0% 6% / 0.7));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(0 0% 100% / 0.06);
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-mono uppercase tracking-wider text-muted-foreground;
+  }
+
+  .chip-primary {
+    @apply chip border-primary/30 text-primary;
+    background: hsl(150 100% 50% / 0.08);
+  }
+
+  .chip-owner {
+    @apply chip;
+    border-color: hsl(270 90% 65% / 0.35);
+    color: hsl(270 90% 75%);
+    background: hsl(270 90% 65% / 0.1);
+  }
+
+  .text-gradient-owner {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-owner);
+  }
+}
