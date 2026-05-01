@@ -58,7 +58,7 @@ export const Navbar = () => {
                 {l.label}
               </Link>
             ) : (
-              
+              <a
                 key={l.to}
                 href={l.to}
                 className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -103,7 +103,7 @@ export const Navbar = () => {
                   {l.label}
                 </Link>
               ) : (
-                
+                <a
                   key={l.to}
                   href={l.to}
                   className="px-3 py-3 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary"
