@@ -46,27 +46,28 @@ export const Navbar = () => {
           <Logo />
         </Link>
 
+        {/* DESKTOP LINKS */}
         <div className="hidden md:flex items-center gap-1">
-  {links.map((l) =>
-    l.isRoute ? (
-      <Link
-        key={l.to}
-        to={l.to}
-        className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {l.label}
-      </Link>
-    ) : (
-      
-        key={l.to}
-        href={l.to}
-        className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {l.label}
-      </a>
-    )
-  )}
-</div>
+          {links.map((l) =>
+            l.isRoute ? (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {l.label}
+              </Link>
+            ) : (
+              
+                key={l.to}
+                href={l.to}
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {l.label}
+              </a>
+            )
+          )}
+        </div>
 
         <div className="hidden md:flex items-center gap-3">
           <LanguageToggle />
@@ -88,28 +89,29 @@ export const Navbar = () => {
         </div>
       </nav>
 
+      {/* MOBILE MENU */}
       {open && (
         <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl animate-fade-in">
           <div className="container py-4 flex flex-col gap-1">
-          {links.map((l) =>
-  l.isRoute ? (
-    <Link
-      key={l.to}
-      to={l.to}
-      className="px-3 py-3 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary"
-    >
-      {l.label}
-    </Link>
-  ) : (
-    
-      key={l.to}
-      href={l.to}
-      className="px-3 py-3 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary"
-    >
-      {l.label}
-    </a>
-  )
-)}
+            {links.map((l) =>
+              l.isRoute ? (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className="px-3 py-3 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary"
+                >
+                  {l.label}
+                </Link>
+              ) : (
+                
+                  key={l.to}
+                  href={l.to}
+                  className="px-3 py-3 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary"
+                >
+                  {l.label}
+                </a>
+              )
+            )}
             <Button variant="wallet" className="mt-3 w-full" onClick={() => setRoleOpen(true)}>
               <Wallet className="h-4 w-4" />
               {t("cta.connect")}
