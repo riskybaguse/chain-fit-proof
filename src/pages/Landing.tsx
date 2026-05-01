@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   Wallet, Play, Database, Trophy, Flame, Brain, ArrowRight, ArrowDown,
   AlertTriangle, ImageOff, FileX, EyeOff, Sparkles, ChevronRight, Zap,
@@ -16,6 +18,16 @@ import { useLang } from "@/context/LanguageContext";
 const Landing = () => {
   const [roleOpen, setRoleOpen] = useState(false);
   const { t, lang } = useLang();
+
+  // Logic web3 solana
+  const { connected } = useWallet();
+
+  // Otomatis buka modal kalau wallet berhasil connect
+  useEffect(() => {
+    if (connected) {
+      setRoleOpen(true);
+    }
+  }, [connected]);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -50,16 +62,17 @@ const Landing = () => {
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
               {t("landing.hero.desc")}
             </p>
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Button variant="hero" size="xl" onClick={() => setRoleOpen(true)}>
-                {t("cta.start")}
-                <ArrowRight className="h-5 w-5" />
-              </Button>
+
+            {/* TWEAK DI SINI: Tombol asli diganti sama wrapper WalletMultiButton */}
+            <div className="flex flex-wrap items-center gap-4 pt-2 [&_.wallet-adapter-button]:bg-primary [&_.wallet-adapter-button]:hover:bg-primary/90 [&_.wallet-adapter-button]:h-14 [&_.wallet-adapter-button]:px-8 [&_.wallet-adapter-button]:rounded-md [&_.wallet-adapter-button]:font-bold [&_.wallet-adapter-button]:text-primary-foreground">
+              <WalletMultiButton />
+
               <Button variant="outline" size="xl">
                 <Play className="h-5 w-5" />
                 {t("cta.demo")}
               </Button>
             </div>
+
             <div className="flex items-center gap-4 pt-4 text-xs font-mono text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
@@ -440,14 +453,12 @@ const Landing = () => {
             <p className="text-muted-foreground mt-5 max-w-xl mx-auto">
               {t("landing.cta.desc")}
             </p>
-            <div className="mt-8">
-              <Button asChild variant="hero" size="xl">
-                <Link to="/dashboard">
-                  <Wallet className="h-5 w-5" />
-                  {t("landing.cta.button")}
-                </Link>
-              </Button>
+
+            {/* TWEAK DI SINI: Ganti tombol link biasa pake WalletMultiButton */}
+            <div className="mt-8 [&_.wallet-adapter-button]:bg-primary [&_.wallet-adapter-button]:hover:bg-primary/90 [&_.wallet-adapter-button]:h-14 [&_.wallet-adapter-button]:px-8 [&_.wallet-adapter-button]:rounded-md [&_.wallet-adapter-button]:font-bold [&_.wallet-adapter-button]:text-primary-foreground [&_.wallet-adapter-button]:mx-auto">
+              <WalletMultiButton />
             </div>
+
             <p className="mt-5 text-xs font-mono text-muted-foreground tracking-wider">
               {t("landing.cta.powered")}
             </p>

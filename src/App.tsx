@@ -15,37 +15,39 @@ import MemberDashboard from "./pages/MemberDashboard";
 import { LanguageProvider } from "./context/LanguageContext";
 import { RoleProvider } from "./context/RoleContext";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
+import { SolanaProvider } from "./context/SolanaProvider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <RoleProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <RouteErrorBoundary>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route element={<AppShell />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/log" element={<Logger />} />
-                  <Route path="/badges" element={<Badges />} />
-                  <Route path="/leaderboard" element={<Leaderboard />} />
-                  <Route path="/owner" element={<OwnerDashboard />} />
-                  <Route path="/member" element={<MemberDashboard />} />
-                </Route>
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </RouteErrorBoundary>
-          </BrowserRouter>
-        </TooltipProvider>
-      </RoleProvider>
-    </LanguageProvider>
-  </QueryClientProvider>
-);
+    <SolanaProvider>
+      <LanguageProvider>
+        <RoleProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <RouteErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route element={<AppShell />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/log" element={<Logger />} />
+                    <Route path="/badges" element={<Badges />} />
+                    <Route path="/leaderboard" element={<Leaderboard />} />
+                    <Route path="/owner" element={<OwnerDashboard />} />
+                    <Route path="/member" element={<MemberDashboard />} />
+                  </Route>
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </RouteErrorBoundary>
+            </BrowserRouter>
+          </TooltipProvider>
+        </RoleProvider>
+      </LanguageProvider>
+    </SolanaProvider>
+  </QueryClientProvider>);
 
 export default App;
