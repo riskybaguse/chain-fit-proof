@@ -7,6 +7,8 @@ import { OnboardingModal } from "./OnboardingModal";
 import { LanguageToggle } from "./LanguageToggle";
 import { useLang } from "@/context/LanguageContext";
 import { useRole, ROLE_META } from "@/context/RoleContext";
+import { useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const WALLET = "7xKm9pQrAv3Z2BcFDeGhJkLmNoPq8sTuVwXyZ12345";
 const shortAddr = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
@@ -15,6 +17,23 @@ export const AppShell = () => {
   const navigate = useNavigate();
   const { t } = useLang();
   const { role } = useRole();
+
+  // ambil fungsi disconnect dan status connect dari solana
+  const { disconnect, connected } = useWallet();
+
+  // proteksi rute: jika disconnected, redirect ke landing
+  useEffect(() => {
+    if (!connected) {
+      navigate("/");
+    }
+  }, [connected, navigate]);
+
+  // fungsi out beneran
+  const handleLogout = async () => {
+    await disconnect();
+    localStorage.removeItem("gainchain.role.v1"); // hapus data role
+    navigate("/");
+  };
 
   const baseLinks = [
     { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard, accent: "primary" as const },
@@ -84,7 +103,7 @@ export const AppShell = () => {
                 4.27 SOL
               </span>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")} aria-label="Disconnect">
+            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Disconnect">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>

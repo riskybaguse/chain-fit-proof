@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { WalletMultiButton, useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   Wallet, Play, Database, Trophy, Flame, Brain, ArrowRight, ArrowDown,
   AlertTriangle, ImageOff, FileX, EyeOff, Sparkles, ChevronRight, Zap,
@@ -21,13 +22,33 @@ const Landing = () => {
 
   // Logic web3 solana
   const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const navigate = useNavigate();
 
   // Otomatis buka modal kalau wallet berhasil connect
   useEffect(() => {
     if (connected) {
-      setRoleOpen(true);
+      const savedRole = localStorage.getItem("gainchain.role.v1");
+      if (savedRole === "solo") {
+        navigate("/dashboard");
+      } else if (savedRole === "owner") {
+        navigate("/owner");
+      } else if (savedRole === "member") {
+        navigate("/member");
+      } else {
+        setRoleOpen(true); // kalo dompet konek tapi role belum dipilih
+      }
     }
-  }, [connected]);
+  }, [connected, navigate]);
+
+  const handleOwnerClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!connected) {
+      setVisible(true); // kalo belum konek, buka popup phantom
+    } else {
+      setRoleOpen(true); // kalo udah konek, tembak buka modal role
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -228,11 +249,9 @@ const Landing = () => {
             </div>
 
             <div className="flex flex-col items-center gap-3 mt-12">
-              <Button asChild variant="owner" size="xl">
-                <Link to="/owner">
-                  <Building2 className="h-5 w-5" />
-                  {lang === "id" ? "Daftarkan Gym Lo" : "Register Your Gym"}
-                </Link>
+              <Button variant="owner" size="xl" onClick={(e) => handleOwnerClick(e)}>
+                <Building2 className="h-5 w-5 mr-2" />
+                {lang === "id" ? "Daftarkan Gym Lo" : "Register Your Gym"}
               </Button>
               <p className="font-mono text-[11px] text-muted-foreground tracking-wider">
                 POWERED BY SOLANA • SMART CONTRACTS READY
@@ -384,7 +403,7 @@ const Landing = () => {
       </section>
 
       {/* NFT SHOWCASE */}
-      <section className="container py-20 md:py-28">
+      <section id="badges" className="container py-20 md:py-28">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div className="chip-primary mb-4 inline-flex"><Trophy className="h-3 w-3" />Achievement Badges</div>
           <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">{lang === "id" ? "NFT Achievement Badges" : "NFT Achievement Badges"}</h2>

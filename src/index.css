@@ -116,6 +116,7 @@
   html {
     @apply dark;
     color-scheme: dark;
+    scroll-behavior: smooth;
   }
 
   body {

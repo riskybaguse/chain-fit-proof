@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { LanguageToggle } from "./LanguageToggle";
 import { useLang } from "@/context/LanguageContext";
 import { RoleSelectModal } from "./RoleSelectModal";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -19,7 +20,7 @@ export const Navbar = () => {
     { label: t("nav.home"), to: "/", isRoute: true },
     { label: t("nav.features"), to: "/#features", isRoute: false },
     { label: t("nav.how"), to: "/#how", isRoute: false },
-    { label: t("nav.leaderboard"), to: "/leaderboard", isRoute: true },
+    { label: t("nav.badges"), to: "/#badges", isRoute: false },
     { label: t("nav.about"), to: "/#about", isRoute: false },
   ];
 
@@ -71,10 +72,12 @@ export const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-3">
           <LanguageToggle />
-          <Button variant="wallet" size="default" onClick={() => setRoleOpen(true)}>
-            <Wallet className="h-4 w-4" />
-            {t("cta.connect")}
-          </Button>
+          
+          {/* TWEAK DESKTOP */}
+          <div className="[&_.wallet-adapter-button]:bg-primary [&_.wallet-adapter-button]:hover:bg-primary/90 [&_.wallet-adapter-button]:h-10 [&_.wallet-adapter-button]:px-4 [&_.wallet-adapter-button]:rounded-md [&_.wallet-adapter-button]:font-bold [&_.wallet-adapter-button]:text-primary-foreground [&_.wallet-adapter-button]:text-sm">
+            <WalletMultiButton />
+          </div>
+
         </div>
 
         <div className="md:hidden flex items-center gap-2">
@@ -112,10 +115,10 @@ export const Navbar = () => {
                 </a>
               )
             )}
-            <Button variant="wallet" className="mt-3 w-full" onClick={() => setRoleOpen(true)}>
-              <Wallet className="h-4 w-4" />
-              {t("cta.connect")}
-            </Button>
+            {/* TWEAK MOBILE */}
+            <div className="mt-3 w-full [&_.wallet-adapter-button]:bg-primary [&_.wallet-adapter-button]:hover:bg-primary/90 [&_.wallet-adapter-button]:h-10 [&_.wallet-adapter-button]:w-full [&_.wallet-adapter-button]:justify-center [&_.wallet-adapter-button]:rounded-md [&_.wallet-adapter-button]:font-bold [&_.wallet-adapter-button]:text-primary-foreground [&_.wallet-adapter-button]:text-sm">
+              <WalletMultiButton />
+            </div>
           </div>
         </div>
       )}
