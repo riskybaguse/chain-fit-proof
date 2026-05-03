@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LanguageToggle } from "./LanguageToggle";
 import { useLang } from "@/context/LanguageContext";
-import { RoleSelectModal } from "./RoleSelectModal";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 export const Navbar = () => {
@@ -122,8 +121,6 @@ export const Navbar = () => {
           </div>
         </div>
       )}
-
-      <RoleSelectModal open={roleOpen} onOpenChange={setRoleOpen} />
     </header>
   );
 };

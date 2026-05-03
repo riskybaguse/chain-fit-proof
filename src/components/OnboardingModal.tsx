@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useLang } from "@/context/LanguageContext";
+import { useRole } from "@/context/RoleContext";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const STORAGE_KEY = "gainchain.onboarding.v1";
 
-type Persona = "solo" | "owner" | null;
+type Persona = "solo" | "owner" | "member" | null;
 type Step = 1 | 2;
 
 const goals = ["Muscle Gain", "Fat Loss", "Endurance", "General Fitness"] as const;
@@ -20,7 +22,9 @@ const levels = ["Beginner", "Intermediate", "Advanced"] as const;
 const programs = ["Push Pull Leg", "Full Body", "Custom"] as const;
 
 export const OnboardingModal = () => {
+  const { connected, disconnect } = useWallet();
   const { t, lang } = useLang();
+  const { setRole } = useRole();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>(1);
@@ -38,11 +42,62 @@ export const OnboardingModal = () => {
   const [capacity, setCapacity] = useState("");
   const [price, setPrice] = useState("");
 
+  const [inviteCode, setInviteCode] = useState("");
+
+  // Fungsi satpam buat nyegat user yang iseng ngeklik silang
+  const handleModalClose = async (newOpenState: boolean) => {
+    // Kalau newOpenState false (artinya user nekan X atau klik area luar modal)
+    if (!newOpenState) {
+      const isDone = localStorage.getItem(STORAGE_KEY);
+
+      // Kalau dia belum selesai onboarding (data di storage belum ada)
+      if (!isDone) {
+        await disconnect(); // Putusin paksa dompetnya!
+        toast({
+          title: lang === "id" ? "Login Dibatalkan" : "Login Cancelled",
+          description: lang === "id" ? "Pilih role untuk masuk ke aplikasi." : "Choose a role to enter the app.",
+          variant: "destructive"
+        });
+        // AppShell bakal otomatis nendang dia ke "/" karena status connected jadi false
+      }
+      setOpen(false);
+    } else {
+      setOpen(true);
+    }
+  };
+
   useEffect(() => {
     const done = localStorage.getItem(STORAGE_KEY);
-    if (!done) setOpen(true);
-  }, []);
+    
+    // Fungsi khusus buat buka modal dengan ngecek tiket VIP
+    const openVipRoute = () => {
+      if (connected && !done) {
+        const intent = sessionStorage.getItem("gainchain.intent");
+        
+        if (intent === "owner") {
+          // JALUR VIP: Langsung lempar ke Step 2 form Owner
+          setPersona("owner");
+          setStep(2);
+          sessionStorage.removeItem("gainchain.intent"); // Sobek tiketnya biar ga kepake dua kali
+        } else {
+          // JALUR NORMAL: Kalau ga ada tiket, mulai dari Step 1
+          if (step !== 2) { // Jaga-jaga biar ga keriset kalo lagi di step 2
+            setPersona(null);
+            setStep(1);
+          }
+        }
+        setOpen(true);
+      }
+    };
 
+    // 1. Jalankan otomatis setiap kali dompet berubah status jadi connect
+    openVipRoute();
+
+    // 2. Pasang pendengar sinyal biar bisa dipaksa buka dari Landing Page
+    window.addEventListener("vip-owner-trigger", openVipRoute);
+    return () => window.removeEventListener("vip-owner-trigger", openVipRoute);
+  }, [connected]); // Dependency tetep connected
+  
   const choose = (p: Exclude<Persona, null>) => {
     setPersona(p);
     setStep(2);
@@ -59,6 +114,7 @@ export const OnboardingModal = () => {
       JSON.stringify({ persona: "solo", goal, level, program, at: Date.now() }),
     );
     toast({ title: lang === "id" ? "Profil athlete dibuat" : "Athlete profile created", description: `${goal} • ${level} • ${program}` });
+    setRole("solo");
     setOpen(false);
     navigate("/dashboard");
   };
@@ -81,15 +137,32 @@ export const OnboardingModal = () => {
       }),
     );
     toast({ title: lang === "id" ? "Gym terdaftar on-chain" : "Gym registered on-chain", description: lang === "id" ? `${gymName} siap menerima member.` : `${gymName} is ready to accept members.` });
+    setRole("owner");
     setOpen(false);
     navigate("/owner");
   };
 
+  const finishMember = () => {
+    if (!inviteCode.trim()) {
+      toast({ title: "Masukkan Kode", description: "Kode invite gym wajib diisi.", variant: "destructive" });
+      return;
+    }
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ persona: "member", inviteCode, at: Date.now() }),
+    );
+    toast({ title: "Berhasil Gabung", description: "Lo sekarang resmi jadi member on-chain." });
+
+    setRole("member");
+    setOpen(false);
+    navigate("/member");
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl border-border bg-card p-0 overflow-hidden">
+    <Dialog open={open} onOpenChange={handleModalClose}>
+      <DialogContent className="max-w-2xl border-border bg-card p-0 overflow-hidden flex flex-col max-h-[90dvh]">
         {/* Header bar */}
-        <div className="relative px-6 pt-6 pb-4 border-b border-border">
+        <div className="relative px-6 pt-6 pb-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" />
             {t("onboarding.step")} {step} {t("onboarding.of")} 2
@@ -97,7 +170,7 @@ export const OnboardingModal = () => {
         </div>
 
         {step === 1 && (
-          <div className="px-6 pb-6 pt-4 space-y-6 animate-fade-in">
+          <div className="px-6 pb-6 pt-4 space-y-6 animate-fade-in overflow-y-auto">
             {/* Illustration */}
             <div className="flex flex-col items-center text-center gap-4">
               <div className="relative h-20 w-20 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow-soft animate-pulse-glow">
@@ -116,8 +189,8 @@ export const OnboardingModal = () => {
               </div>
             </div>
 
-            {/* Two option cards */}
-            <div className="grid sm:grid-cols-2 gap-4">
+            {/* Three option cards */}
+            <div className="grid sm:grid-cols-3 gap-4">
               <button
                 onClick={() => choose("solo")}
                 className="group text-left rounded-xl border border-border bg-secondary/30 p-5 transition-all hover:border-primary hover:bg-primary/5 hover:shadow-glow-soft hover:-translate-y-0.5"
@@ -149,6 +222,22 @@ export const OnboardingModal = () => {
                   {t("onboarding.chooseThis")} →
                 </div>
               </button>
+
+              <button
+                onClick={() => choose("member")}
+                className="group text-left rounded-xl border border-border bg-secondary/30 p-5 transition-all hover:border-accent hover:bg-accent/5 hover:shadow-glow-soft hover:-translate-y-0.5"
+              >
+                <div className="h-12 w-12 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center mb-4 group-hover:bg-accent/25">
+                  <User className="h-6 w-6 text-accent" /> {/* Jangan lupa import User dari lucide-react kalo belum */}
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-1">Saya Member Gym</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Masuk pakai kode invite, dapatkan akses NFT membership.
+                </p>
+                <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-accent">
+                  Pilih ini →
+                </div>
+              </button>
             </div>
 
             <p className="text-center text-[11px] font-mono text-muted-foreground">
@@ -158,7 +247,7 @@ export const OnboardingModal = () => {
         )}
 
         {step === 2 && persona === "solo" && (
-          <div className="px-6 pb-6 pt-4 space-y-6 animate-fade-in">
+          <div className="px-6 pb-6 pt-4 space-y-6 animate-fade-in overflow-y-auto">
             <div>
               <DialogTitle className="text-2xl font-extrabold">{t("onboarding.setupAthlete")}</DialogTitle>
               <DialogDescription className="text-muted-foreground">
@@ -182,7 +271,7 @@ export const OnboardingModal = () => {
         )}
 
         {step === 2 && persona === "owner" && (
-          <div className="px-6 pb-6 pt-4 space-y-5 animate-fade-in">
+          <div className="px-6 pb-6 pt-4 space-y-5 animate-fade-in overflow-y-auto">
             <div>
               <DialogTitle className="text-2xl font-extrabold">{t("onboarding.registerGym")}</DialogTitle>
               <DialogDescription className="text-muted-foreground">
@@ -199,7 +288,7 @@ export const OnboardingModal = () => {
               </Field>
             </div>
 
-              <Field label={t("onboarding.gymDesc")}>
+            <Field label={t("onboarding.gymDesc")}>
               <Textarea
                 value={gymDesc}
                 onChange={(e) => setGymDesc(e.target.value.slice(0, 280))}
@@ -224,6 +313,33 @@ export const OnboardingModal = () => {
               </Button>
               <Button variant="owner" size="lg" onClick={finishOwner}>
                 {t("onboarding.register")} <Check className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+        {step === 2 && persona === "member" && (
+          <div className="px-6 pb-6 pt-4 space-y-6 animate-fade-in overflow-y-auto">
+            <div>
+              <DialogTitle className="text-2xl font-extrabold">Gabung ke Gym</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Masukkan kode invite dari Owner Gym buat dapetin akses membership lo.
+              </DialogDescription>
+            </div>
+
+            <Field label="Gym Invite Code">
+              <Input
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="Misal: IRON-7XKM"
+              />
+            </Field>
+
+            <div className="flex items-center justify-between pt-2">
+              <Button variant="ghost" onClick={back}>
+                <ArrowLeft className="h-4 w-4" /> {t("onboarding.back")}
+              </Button>
+              <Button variant="hero" size="lg" onClick={finishMember} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                Gabung <Check className="h-4 w-4 ml-2" />
               </Button>
             </div>
           </div>

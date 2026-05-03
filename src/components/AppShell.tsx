@@ -3,7 +3,6 @@ import { LayoutDashboard, Dumbbell, Trophy, BarChart3, LogOut, Wallet, Building2
 import { Logo } from "./Logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { OnboardingModal } from "./OnboardingModal";
 import { LanguageToggle } from "./LanguageToggle";
 import { useLang } from "@/context/LanguageContext";
 import { useRole, ROLE_META } from "@/context/RoleContext";
@@ -147,7 +146,6 @@ export const AppShell = () => {
       <main className="container py-8">
         <Outlet />
       </main>
-      <OnboardingModal />
     </div>
   );
 };

@@ -13,40 +13,54 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { CountUp } from "@/components/CountUp";
 import { NFTBadge } from "@/components/NFTBadge";
-import { RoleSelectModal } from "@/components/RoleSelectModal";
 import { useLang } from "@/context/LanguageContext";
+import { OnboardingModal } from "@/components/OnboardingModal";
 
 const Landing = () => {
-  const [roleOpen, setRoleOpen] = useState(false);
   const { t, lang } = useLang();
 
+  // HAPUS state roleOpen, udah ga kepake!
+  
   // Logic web3 solana
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const navigate = useNavigate();
 
-  // Otomatis buka modal kalau wallet berhasil connect
+  // Otomatis tendang user ke dalem kalau wallet berhasil connect
   useEffect(() => {
     if (connected) {
       const savedRole = localStorage.getItem("gainchain.role.v1");
-      if (savedRole === "solo") {
-        navigate("/dashboard");
-      } else if (savedRole === "owner") {
-        navigate("/owner");
-      } else if (savedRole === "member") {
-        navigate("/member");
-      } else {
-        setRoleOpen(true); // kalo dompet konek tapi role belum dipilih
+      const isDone = localStorage.getItem("gainchain.onboarding.v1"); // Cek juga bukti Onboarding-nya
+
+      // Kalau udah pernah ngisi lengkap, baru tendang ke dalam sesuai role
+      if (isDone) {
+        if (savedRole === "owner") navigate("/owner");
+        else if (savedRole === "member") navigate("/member");
+        else navigate("/dashboard"); 
       }
+      // Kalau isDone KOSONG, sistem bakal diem aja di Landing Page biar OnboardingModal bisa muncul!
     }
   }, [connected, navigate]);
 
   const handleOwnerClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    
+    const isDone = localStorage.getItem("gainchain.onboarding.v1");
+    if (isDone && connected) {
+      // Kalau dia udah pernah login & punya data, langsung lempar aja ke dashboardnya
+      navigate("/owner");
+      return;
+    }
+
+    // Kasih Tiket VIP ke Session Storage
+    sessionStorage.setItem("gainchain.intent", "owner");
+
     if (!connected) {
-      setVisible(true); // kalo belum konek, buka popup phantom
+      // Kalau belum login, buka Phantom
+      setVisible(true); 
     } else {
-      setRoleOpen(true); // kalo udah konek, tembak buka modal role
+      // Kalau udah login tapi modalnya lagi ketutup, tembak sinyal paksa buat buka!
+      window.dispatchEvent(new Event("vip-owner-trigger"));
     }
   };
 
@@ -486,7 +500,7 @@ const Landing = () => {
       </section>
 
       <Footer />
-      <RoleSelectModal open={roleOpen} onOpenChange={setRoleOpen} />
+      <OnboardingModal />
     </div>
   );
 };

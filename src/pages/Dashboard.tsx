@@ -6,10 +6,18 @@ import { useLang } from "@/context/LanguageContext";
 import { useWorkout } from "@/context/WorkoutContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const Dashboard = () => {
   const { t } = useLang();
   const { workouts, streak, totalWorkouts, totalVolume } = useWorkout();
+
+  const { publicKey } = useWallet();
+
+  const shortAddr = publicKey
+  ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` 
+    : "Not Connected";
+
 
   // BIKIN TANGGAL HARI INI JADI DINAMIS
   const today = new Date();
@@ -60,7 +68,7 @@ const Dashboard = () => {
               {t("dashboard.welcome")}
             </h1>
             <p className="font-mono text-sm text-muted-foreground mt-2">
-              7xKm9pQrAv3Z2BcF...12345 • {dateFormatted}
+              {shortAddr} • {dateFormatted}
             </p>
           </div>
           <Button asChild variant="hero">

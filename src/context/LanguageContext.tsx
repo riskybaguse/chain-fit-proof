@@ -159,7 +159,7 @@ const dict = {
     "onboarding.program": "Preferred Program",
     "onboarding.back": "Kembali",
     "onboarding.start": "Mulai Journey",
-    "onboarding.registerGym": "Daftarkan Gym-mu",
+    "onboarding.registerGym": "Daftarkan Gym Lo",
     "onboarding.registerDesc": "Info ini akan disimpan on-chain dan ditampilkan ke calon member.",
     "onboarding.gymName": "Gym Name",
     "onboarding.location": "Location",
