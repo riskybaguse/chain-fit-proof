@@ -20,7 +20,7 @@ export const Navbar = () => {
     { label: t("nav.home"), to: "/", isRoute: true },
     { label: t("nav.features"), to: "/#features", isRoute: false },
     { label: t("nav.how"), to: "/#how", isRoute: false },
-    { label: t("nav.badges"), to: "/#badges", isRoute: false },
+    { label: t("nav.nft"), to: "/#badges", isRoute: false },
     { label: t("nav.about"), to: "/#about", isRoute: false },
   ];
 

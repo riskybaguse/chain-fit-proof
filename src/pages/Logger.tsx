@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/context/LanguageContext";
+import { useNavigate } from "react-router-dom";
+import { useWorkout } from "@/context/WorkoutContext";
 
 type WorkoutType = "PUSH" | "PULL" | "LEG" | "CUSTOM";
 
@@ -19,16 +21,13 @@ const types: { key: WorkoutType; emoji: string; label: string }[] = [
   { key: "CUSTOM", emoji: "⚙️", label: "Custom" },
 ];
 
-const history = [
-  { date: "2026-04-26", type: "PULL", duration: 58, exercises: ["Pull Up 4×8", "Barbell Row 4×10 @70kg", "Lat Pulldown 3×12 @55kg", "Bicep Curl 3×12 @14kg", "Hammer Curl 3×12 @12kg"], tx: "4hN2vBcL8mQs" },
-  { date: "2026-04-25", type: "LEG",  duration: 71, exercises: ["Squat 5×5 @100kg", "Romanian DL 4×8 @80kg", "Leg Press 4×10 @180kg", "Leg Curl 3×12 @45kg", "Calf Raise 4×15 @60kg"], tx: "9aZ3kRpW1nDe" },
-  { date: "2026-04-24", type: "PUSH", duration: 55, exercises: ["Bench Press 4×8 @80kg", "OHP 4×8 @45kg", "Incline DB 3×10 @22kg", "Lateral Raise 3×15 @8kg", "Tricep Pushdown 3×12 @30kg"], tx: "2cF7xJtH5gYu" },
-];
-
 const Logger = () => {
   const { t } = useLang();
+  const navigate = useNavigate();
+  const { addWorkout, workouts } = useWorkout(); // narik fitur
   const [type, setType] = useState<WorkoutType>("PUSH");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [customName, setCustomName] = useState("");
+  const [date] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<Exercise[]>([
     { id: 1, name: "Bench Press", sets: "4", reps: "8", weight: "80" },
   ]);
@@ -43,15 +42,37 @@ const Logger = () => {
     setExercises((arr) => arr.map((e) => (e.id === id ? { ...e, [k]: v } : e)));
 
   const submit = async () => {
+    // Validasi kecil biar ga submit kosong
+    if (exercises.length === 0 || exercises[0].name === "") {
+      toast.error("Masukin minimal 1 latihan dong bre!");
+      return;
+    }
+
+    const finalType = type === "CUSTOM"
+      ? (customName.trim() === "" ? "CUSTOM" : customName.trim().toUpperCase())
+      : type;
+
     setSubmitting(true);
+
+    // Simulasi loading Solana
     await new Promise((r) => setTimeout(r, 2000));
-    setSubmitting(false);
-    toast.success("✅ Workout saved on Solana!", {
-      description: `TX: 7xKm9pQrAv3Z...${Math.random().toString(36).slice(2, 6)}`,
+
+    // Tembak ke Otak (Context)
+    addWorkout({
+      date,
+      type: finalType,
+      duration,
+      exercises,
     });
+
+    setSubmitting(false);
+    toast.success("✅ Workout saved on Solana!");
+
+    // Optional: Lempar balik ke dashboard biar dia liat streak-nya nambah
+    setTimeout(() => navigate("/dashboard"), 1500);
   };
 
-  const filtered = history.filter((h) => filter === "ALL" || h.type === filter);
+  const filtered = workouts.filter((h) => filter === "ALL" || h.type === filter);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -68,7 +89,12 @@ const Logger = () => {
               <Label className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2 block">{t("logger.date")}</Label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="pl-9 font-mono bg-background border-border" />
+                <Input
+                  type="date"
+                  value={date}
+                  disabled
+                  className="pl-9 font-mono bg-secondary/50 border-border opacity-70 cursor-not-allowed"
+                />
               </div>
             </div>
             <div>
@@ -96,6 +122,20 @@ const Logger = () => {
                 </button>
               ))}
             </div>
+            {type === "CUSTOM" && (
+              <div className="mt-4 animate-fade-in">
+                <Label className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2 block">
+                  Judul Latihan Custom
+                </Label>
+                <Input
+                  placeholder="Contoh: CROSSFIT, FULL BODY, MUAY THAI..."
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  className="bg-background border-border font-mono"
+                  maxLength={15} // Balesan asdos: batesin 15 huruf aja biar UI lu kaga jebol
+                />
+              </div>
+            )}
           </div>
 
           {/* Exercises */}
@@ -185,27 +225,63 @@ const Logger = () => {
             ))}
           </div>
         </div>
-        <div className="divide-y divide-border">
-          {filtered.map((w, i) => (
-            <details key={i} className="group">
-              <summary className="cursor-pointer p-5 flex items-center justify-between hover:bg-background/40 transition-colors">
-                <div className="flex items-center gap-4">
-                  <span className="chip-primary text-[10px]">{w.type}</span>
-                  <span className="font-mono text-sm">{w.date}</span>
-                  <span className="font-mono text-xs text-muted-foreground hidden sm:inline">{w.duration} min • {w.exercises.length} exercises</span>
-                </div>
-                <span className="font-mono text-xs text-primary">{w.tx}...</span>
-              </summary>
-              <div className="px-5 pb-5 grid gap-2">
-                {w.exercises.map((ex, j) => (
-                  <div key={j} className="flex items-center gap-3 px-4 py-2 rounded-md bg-background border border-border font-mono text-xs">
-                    <span className="text-primary">●</span>
-                    <span>{ex}</span>
+        <div className="p-4 grid gap-3">
+          {filtered.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground font-mono">
+              Belum ada data latihan.
+            </div>
+          ) : (
+            filtered.map((w, i) => {
+              const typeData = types.find(t => t.key === w.type);
+
+              // Kalo kosong, kasih teks default "Pending..."
+              const validTx = w.txHash || w.tx || "Pending...";
+
+              // Potong txHash cuma kalo panjangnya lebih dari 8 karakter
+              const displayTx = validTx.length > 8
+                ? `${validTx.slice(0, 4)}...${validTx.slice(-4)}`
+                : validTx;
+
+              // Jaga-jaga kalo exercises-nya kosong
+              const exerciseList = w.exercises && w.exercises.length > 0
+                ? w.exercises.map(e => e.name).join(", ")
+                : "Tidak ada data gerakan";
+
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-4 rounded-xl border border-border bg-background hover:border-primary/40 hover:shadow-glow-soft transition-all group"
+                >
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <div className="h-12 w-12 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-2xl border border-primary/20">
+                      {typeData?.emoji || "🏋️"}
+                    </div>
+
+                    <div className="truncate">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-sm tracking-wider">{w.type}</span>
+                        <span className="text-[10px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-secondary">
+                          {w.date}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate w-[150px] sm:w-[300px]">
+                        {exerciseList}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </details>
-          ))}
+
+                  <div className="text-right shrink-0">
+                    <a href="#" className="text-xs font-mono text-primary hover:underline flex items-center justify-end gap-1 mb-1">
+                      {displayTx} <CheckCircle2 className="h-3 w-3" />
+                    </a>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      {w.duration} MIN • {w.exercises?.length || 0} EXS
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

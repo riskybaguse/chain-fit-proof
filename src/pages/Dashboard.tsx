@@ -3,19 +3,51 @@ import { Flame, Dumbbell, Zap, Trophy, ExternalLink, ArrowRight, CheckCircle2 } 
 import { Button } from "@/components/ui/button";
 import { NFTBadge } from "@/components/NFTBadge";
 import { useLang } from "@/context/LanguageContext";
-
-const recentWorkouts = [
-  { date: "2026-04-27", type: "Push", duration: "62 min", exercises: 6, tx: "7xKm9pQrAv3Z" },
-  { date: "2026-04-26", type: "Pull", duration: "58 min", exercises: 5, tx: "4hN2vBcL8mQs" },
-  { date: "2026-04-25", type: "Leg",  duration: "71 min", exercises: 7, tx: "9aZ3kRpW1nDe" },
-  { date: "2026-04-24", type: "Push", duration: "55 min", exercises: 6, tx: "2cF7xJtH5gYu" },
-  { date: "2026-04-23", type: "Pull", duration: "60 min", exercises: 5, tx: "5dM1nKsP4vBz" },
-  { date: "2026-04-22", type: "Leg",  duration: "68 min", exercises: 7, tx: "8eR6yLqA3wXc" },
-  { date: "2026-04-21", type: "Push", duration: "63 min", exercises: 6, tx: "1bG4tWpN7uVk" },
-];
+import { useWorkout } from "@/context/WorkoutContext";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo } from "react";
 
 const Dashboard = () => {
   const { t } = useLang();
+  const { workouts, streak, totalWorkouts, totalVolume } = useWorkout();
+
+  // BIKIN TANGGAL HARI INI JADI DINAMIS
+  const today = new Date();
+  const dateFormatted = today.toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const dateShort = today.toLocaleDateString("en-US", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  // LOGIKA PENGHITUNG BADGE OTOMATIS BERDASARKAN STREAK
+  let badgesEarned = 0;
+  if (streak >= 30) badgesEarned++;
+  if (streak >= 90) badgesEarned++;
+  if (streak >= 180) badgesEarned++;
+  if (streak >= 365) badgesEarned++;
+
+  let nextBadgeDays = 30 - streak;
+  let nextBadgeName = "Bronze";
+  if (streak >= 30) { nextBadgeDays = 90 - streak; nextBadgeName = "Silver"; }
+  if (streak >= 90) { nextBadgeDays = 180 - streak; nextBadgeName = "Gold"; }
+  if (streak >= 180) { nextBadgeDays = 365 - streak; nextBadgeName = "Diamond"; }
+
+  // LOGIKA PENGHITUNG WORKOUT BULAN INI
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const workoutsThisMonth = workouts.filter((w) => {
+    if (!w || !w.date) return false;
+    const wDate = new Date(w.date);
+    return wDate.getMonth() === currentMonth && wDate.getFullYear() === currentYear;
+  }).length;
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Welcome */}
@@ -28,7 +60,7 @@ const Dashboard = () => {
               {t("dashboard.welcome")}
             </h1>
             <p className="font-mono text-sm text-muted-foreground mt-2">
-              7xKm9pQrAv3Z2BcF...12345 • Senin, 27 April 2026
+              7xKm9pQrAv3Z2BcF...12345 • {dateFormatted}
             </p>
           </div>
           <Button asChild variant="hero">
@@ -41,10 +73,11 @@ const Dashboard = () => {
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Flame} label={t("dashboard.currentStreak")} value="47" unit="Days" sub="Personal Best: 62 Days" accent="primary" />
-        <StatCard icon={Dumbbell} label={t("dashboard.totalWorkouts")} value="134" sub="This month: 18" />
-        <StatCard icon={Zap} label={t("dashboard.totalVolume")} value="48,230" unit="kg" sub="This week: 2,840 kg" />
-        <StatCard icon={Trophy} label={t("dashboard.badgesEarned")} value="2" sub="Next: Silver (43 days away)" accent="gold" />
+        <StatCard icon={Flame} label={t("dashboard.currentStreak")} value={streak.toString()} unit="Days" sub={`Personal Best: ${Math.max(streak, 62)} Days`} accent="primary" />
+        <StatCard icon={Dumbbell} label={t("dashboard.totalWorkouts")} value={totalWorkouts.toString()} sub={`This month: ${workoutsThisMonth}`} />
+        {/* Catatan Asdos: totalVolume masih dari Context, biarin aja dulu buat MVP */}
+        <StatCard icon={Zap} label={t("dashboard.totalVolume")} value={totalVolume} unit="kg" sub="Tracking actively" />
+        <StatCard icon={Trophy} label={t("dashboard.badgesEarned")} value={badgesEarned.toString()} sub={nextBadgeDays > 0 ? `Next: ${nextBadgeName} (${nextBadgeDays} days away)` : "Max Level Reached!"} accent="gold" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -53,7 +86,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-xl font-bold">{t("dashboard.quickLog.title")}</h2>
-              <p className="text-sm text-muted-foreground font-mono mt-1">Mon, 27 April 2026</p>
+              <p className="text-sm text-muted-foreground font-mono mt-1">{dateShort}</p>
             </div>
             <span className="chip-primary"><CheckCircle2 className="h-3 w-3" />On-Chain</span>
           </div>
@@ -82,17 +115,24 @@ const Dashboard = () => {
         {/* Progress to next badge */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <h2 className="text-xl font-bold mb-1">{t("dashboard.progressSilver")}</h2>
-          <p className="text-sm text-muted-foreground mb-5">{t("dashboard.progressSilverSub")}</p>
+          <p className="text-sm text-muted-foreground mb-5">
+            {90 - streak > 0 ? `${90 - streak} hari lagi untuk Silver Badge!` : "Silver Badge Achieved!"}
+          </p>
           <div className="flex justify-center mb-5">
-            <NFTBadge tier="silver" size="lg" locked />
+            <NFTBadge tier="silver" size="lg" locked={streak < 90} />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between font-mono text-xs">
-              <span className="text-muted-foreground">47 / 90 DAYS</span>
-              <span className="text-primary font-bold">52%</span>
+              <span className="text-muted-foreground">{streak} / 90 DAYS</span>
+              <span className="text-primary font-bold">
+                {Math.min(Math.round((streak / 90) * 100), 100)}%
+              </span>
             </div>
             <div className="h-3 rounded-full bg-secondary overflow-hidden border border-border">
-              <div className="h-full bg-gradient-primary shadow-glow-soft transition-all" style={{ width: "52%" }} />
+              <div 
+                className="h-full bg-gradient-primary shadow-glow-soft transition-all duration-1000" 
+                style={{ width: `${Math.min((streak / 90) * 100, 100)}%` }} 
+              />
             </div>
           </div>
         </div>
@@ -117,12 +157,12 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {recentWorkouts.map((w, i) => (
+            {workouts.slice(0, 7).map((w, i) => (
                 <tr key={i} className="hover:bg-background/40 transition-colors">
                   <td className="p-4 font-mono text-xs">{w.date}</td>
                   <td className="p-4"><span className="chip-primary text-[10px]">{w.type.toUpperCase()}</span></td>
-                  <td className="p-4 font-mono">{w.duration}</td>
-                  <td className="p-4 font-mono">{w.exercises}</td>
+                  <td className="p-4 font-mono">{w.duration} min</td>
+                  <td className="p-4 font-mono">{w.exercises.length}</td>
                   <td className="p-4">
                     <a href="#" className="font-mono text-xs text-primary hover:underline inline-flex items-center gap-1">
                       {w.tx}...
@@ -167,40 +207,109 @@ const StatCard = ({
 
 const StreakCalendar = () => {
   const { t } = useLang();
-  // April 2026 starts on Wednesday
-  const days = Array.from({ length: 30 }, (_, i) => i + 1);
-  const workoutDays = new Set([1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27]);
-  const today = 27;
-  const offset = 2; // Wednesday
+  // Antisipasi kalau context telat nge-load
+  const workoutContext = useWorkout();
+  const workouts = workoutContext?.workouts || [];
+
+  // SABUK PENGAMAN 1: Pake fungsi di dalem useState biar nilainya dikunci kuat-kuat
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
+
+  // SABUK PENGAMAN 2: Validasi ganda biar currentDate ga pernah undefined
+  const safeDate = (currentDate instanceof Date && !isNaN(currentDate.getTime())) 
+    ? currentDate 
+    : new Date();
+
+  const year = safeDate.getFullYear();
+  const month = safeDate.getMonth();
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+  // Bikin nama bulan manual biar aman di semua browser
+  const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+  const monthName = `${monthNames[month]} ${year}`;
+
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+
+  // SABUK PENGAMAN 3: Bungkus filter pake useMemo dan try-catch
+  const workoutDays = useMemo(() => {
+    if (!Array.isArray(workouts)) return new Set();
+
+    return new Set(
+      workouts
+        .filter((w) => {
+          if (!w || !w.date) return false; // Tendang kalo datanya cacat
+          try {
+            const wDate = new Date(w.date);
+            // Kalo tangganya ga valid, isNaN bakal nangkep dan nendang datanya
+            if (!(wDate instanceof Date) || isNaN(wDate.getTime())) return false;
+            return wDate.getMonth() === month && wDate.getFullYear() === year;
+          } catch (err) {
+            return false;
+          }
+        })
+        .map((w) => {
+          try {
+            return parseInt(w.date.split("-")[2], 10);
+          } catch (err) {
+            return 0;
+          }
+        })
+    );
+  }, [workouts, month, year]);
+
+  // SABUK PENGAMAN 4: Validasi realToday
+  const realToday = new Date();
+  const safeToday = (realToday instanceof Date && !isNaN(realToday.getTime())) 
+    ? realToday 
+    : new Date();
+
+  const isCurrentMonth = safeToday.getMonth() === month && safeToday.getFullYear() === year;
+  const todayDate = safeToday.getDate();
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-4">
         <div>
-          <h2 className="text-xl font-bold">{t("dashboard.calendar")}</h2>
-          <p className="text-xs font-mono text-muted-foreground mt-1">APRIL 2026</p>
+          <h2 className="text-xl font-bold">{t("dashboard.calendar") || "Streak Calendar"}</h2>
+          <div className="flex items-center gap-2 mt-1">
+            <button onClick={prevMonth} className="p-1 rounded-md hover:bg-secondary text-muted-foreground transition-colors">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <p className="text-xs font-mono text-muted-foreground font-bold w-24 text-center">
+              {monthName}
+            </p>
+            <button onClick={nextMonth} className="p-1 rounded-md hover:bg-secondary text-muted-foreground transition-colors">
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
           <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-primary shadow-glow-soft" /> Workout</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-secondary border border-border" /> Rest</span>
         </div>
       </div>
+
       <div className="grid grid-cols-7 gap-2 text-center">
         {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
           <div key={d} className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground py-2">{d}</div>
         ))}
-        {Array.from({ length: offset }).map((_, i) => <div key={`o${i}`} />)}
-        {days.map((d) => {
+        
+        {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
+        
+        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
           const isWorkout = workoutDays.has(d);
-          const isToday = d === today;
+          const isToday = isCurrentMonth && d === todayDate;
+          
           return (
             <div
               key={d}
               className={`aspect-square rounded-lg flex flex-col items-center justify-center border transition-all ${
-                isToday ? "border-primary shadow-glow-soft" : "border-border"
-              } ${isWorkout ? "bg-primary/15" : "bg-background/40"}`}
+                isToday ? "border-primary shadow-glow-soft ring-1 ring-primary/50" : "border-border"
+              } ${isWorkout ? "bg-primary/15" : "bg-background/40 hover:bg-secondary/50"}`}
             >
-              <span className={`text-xs font-mono ${isWorkout ? "text-foreground" : "text-muted-foreground"}`}>{d}</span>
+              <span className={`text-xs font-mono ${isWorkout ? "text-foreground font-bold" : "text-muted-foreground"}`}>{d}</span>
               {isWorkout && <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-glow-soft mt-1" />}
             </div>
           );
