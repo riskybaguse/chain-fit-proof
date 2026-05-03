@@ -174,6 +174,7 @@ const dict = {
     "nav.dashboard": "Dashboard",
     "nav.log": "Log Workout",
     "nav.badges": "My Badges",
+    "nav.nft": "NFT Badges",
     "nav.leaderboard": "Leaderboard",
     "nav.owner": "Owner",
     "nav.myGym": "My Gym",
