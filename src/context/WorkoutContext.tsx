@@ -15,7 +15,6 @@ export type Workout = {
   type: string;
   duration: string;
   exercises: Exercise[];
-  exercises: number;
   txHash: string;
   status: "Verified";
 };
