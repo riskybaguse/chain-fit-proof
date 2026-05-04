@@ -24,11 +24,11 @@ export const Logo = ({ className, showBeta = true, size = "md" }: LogoProps) => 
         <span className={cn("font-extrabold tracking-tight text-foreground", sizes.text)}>
           Gain<span className="text-primary">Chain</span>
         </span>
-        {showBeta && (
+        {/* {showBeta && (
           <span className="rounded-md bg-primary/15 border border-primary/30 px-1.5 py-0.5 text-[9px] font-mono font-bold text-primary tracking-widest">
             BETA
           </span>
-        )}
+        )} */}
       </div>
     </div>
   );
