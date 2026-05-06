@@ -133,7 +133,7 @@ const Landing = () => {
                 <div className="flex items-end gap-3 mb-4">
                   <Flame className="h-14 w-14 text-primary drop-shadow-[0_0_12px_hsl(150_100%_50%/0.6)]" />
                   <div>
-                    <div className="font-mono text-6xl font-extrabold text-foreground leading-none">47</div>
+                    <div className="font-mono text-6xl font-extrabold text-foreground leading-none">145</div>
                     <div className="text-sm text-muted-foreground mt-1">Day Streak</div>
                   </div>
                 </div>
