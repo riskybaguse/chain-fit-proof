@@ -1,40 +1,42 @@
 import { Link } from "react-router-dom";
-import { Flame, Dumbbell, Zap, Trophy, ExternalLink, ArrowRight, CheckCircle2 } from "lucide-react";
+import { 
+  Flame, Dumbbell, Zap, Trophy, ExternalLink, 
+  ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, Medal 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NFTBadge } from "@/components/NFTBadge";
+import { NFTBadge, BadgeTier } from "@/components/NFTBadge";
 import { useLang } from "@/context/LanguageContext";
 import { useWorkout } from "@/context/WorkoutContext";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+
+// MESIN PENGHITUNG TARGET BADGE (Biar Dinamis!)
+const getProgressData = (s: number): { target: number, name: string, tier: BadgeTier } => {
+  if (s < 30) return { target: 30, name: "Bronze", tier: "bronze" };
+  if (s < 90) return { target: 90, name: "Silver", tier: "silver" };
+  if (s < 180) return { target: 180, name: "Gold", tier: "gold" };
+  if (s < 365) return { target: 365, name: "Diamond", tier: "diamond" };
+  // Mentok di 365 hari (Legendary pake visual Diamond)
+  return { target: 365, name: "Legendary", tier: "diamond" }; 
+};
 
 const Dashboard = () => {
   const { t } = useLang();
   const { workouts, streak, totalWorkouts, totalVolume } = useWorkout();
-
   const { publicKey } = useWallet();
 
   const shortAddr = publicKey
-  ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` 
+    ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` 
     : "Not Connected";
 
-
-  // BIKIN TANGGAL HARI INI JADI DINAMIS
   const today = new Date();
   const dateFormatted = today.toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
   const dateShort = today.toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    weekday: "short", day: "numeric", month: "long", year: "numeric",
   });
 
-  // LOGIKA PENGHITUNG BADGE OTOMATIS BERDASARKAN STREAK
   let badgesEarned = 0;
   if (streak >= 30) badgesEarned++;
   if (streak >= 90) badgesEarned++;
@@ -47,7 +49,6 @@ const Dashboard = () => {
   if (streak >= 90) { nextBadgeDays = 180 - streak; nextBadgeName = "Gold"; }
   if (streak >= 180) { nextBadgeDays = 365 - streak; nextBadgeName = "Diamond"; }
 
-  // LOGIKA PENGHITUNG WORKOUT BULAN INI
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
   const workoutsThisMonth = workouts.filter((w) => {
@@ -55,6 +56,10 @@ const Dashboard = () => {
     const wDate = new Date(w.date);
     return wDate.getMonth() === currentMonth && wDate.getFullYear() === currentYear;
   }).length;
+
+  // LOGIKA DINAMIS BUAT KARTU PROGRESS
+  const progress = getProgressData(streak);
+  const percentage = streak >= 365 ? 100 : Math.min(100, Math.round((streak / progress.target) * 100));
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -83,7 +88,6 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Flame} label={t("dashboard.currentStreak")} value={streak.toString()} unit="Days" sub={`Personal Best: ${Math.max(streak, 62)} Days`} accent="primary" />
         <StatCard icon={Dumbbell} label={t("dashboard.totalWorkouts")} value={totalWorkouts.toString()} sub={`This month: ${workoutsThisMonth}`} />
-        {/* Catatan Asdos: totalVolume masih dari Context, biarin aja dulu buat MVP */}
         <StatCard icon={Zap} label={t("dashboard.totalVolume")} value={totalVolume} unit="kg" sub="Tracking actively" />
         <StatCard icon={Trophy} label={t("dashboard.badgesEarned")} value={badgesEarned.toString()} sub={nextBadgeDays > 0 ? `Next: ${nextBadgeName} (${nextBadgeDays} days away)` : "Max Level Reached!"} accent="gold" />
       </div>
@@ -120,27 +124,34 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        {/* Progress to next badge */}
+        {/* PROGRESS BADGE DINAMIS (Bukan hardcode Silver lagi) */}
         <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="text-xl font-bold mb-1">{t("dashboard.progressSilver")}</h2>
+          <h2 className="text-xl font-bold mb-1">
+            {streak >= 365 ? "Max Tier Achieved!" : `Progress to ${progress.name}`}
+          </h2>
           <p className="text-sm text-muted-foreground mb-5">
-            {90 - streak > 0 ? `${90 - streak} hari lagi untuk Silver Badge!` : "Silver Badge Achieved!"}
+            {streak >= 365 ? "Legendary Athlete 👑" : `${progress.target - streak} days remaining`}
           </p>
+          
           <div className="flex justify-center mb-5">
-            <NFTBadge tier="silver" size="lg" locked={streak < 90} />
+            {/* INI DIA MANTRA SAKTINYA */}
+            <NFTBadge 
+              tier={progress.tier} 
+              size="lg" 
+              locked={streak < progress.target && streak < 365} 
+            />
           </div>
+          
           <div className="space-y-2">
             <div className="flex justify-between font-mono text-xs">
-              <span className="text-muted-foreground">{streak} / 90 DAYS</span>
-              <span className="text-primary font-bold">
-                {Math.min(Math.round((streak / 90) * 100), 100)}%
-              </span>
+              <span className="text-muted-foreground">{streak} / {streak >= 365 ? "MAX" : progress.target} DAYS</span>
+              <span className="text-primary font-bold">{percentage}%</span>
             </div>
             <div className="h-3 rounded-full bg-secondary overflow-hidden border border-border">
               <div 
-                className="h-full bg-gradient-primary shadow-glow-soft transition-all duration-1000" 
-                style={{ width: `${Math.min((streak / 90) * 100, 100)}%` }} 
-              />
+                className="h-full bg-gradient-primary shadow-glow-soft transition-all duration-1000 ease-out" 
+                style={{ width: `${percentage}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -170,10 +181,11 @@ const Dashboard = () => {
                   <td className="p-4 font-mono text-xs">{w.date}</td>
                   <td className="p-4"><span className="chip-primary text-[10px]">{w.type.toUpperCase()}</span></td>
                   <td className="p-4 font-mono">{w.duration} min</td>
-                  <td className="p-4 font-mono">{w.exercises.length}</td>
+                  <td className="p-4 font-mono">{w.exercises?.length || 0}</td>
                   <td className="p-4">
+                    {/* TYPO FIX: w.tx diganti jadi w.txHash */}
                     <a href="#" className="font-mono text-xs text-primary hover:underline inline-flex items-center gap-1">
-                      {w.tx}...
+                      {w.txHash ? `${w.txHash.slice(0, 8)}...` : "Pending"}
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   </td>
@@ -215,14 +227,11 @@ const StatCard = ({
 
 const StreakCalendar = () => {
   const { t } = useLang();
-  // Antisipasi kalau context telat nge-load
   const workoutContext = useWorkout();
   const workouts = workoutContext?.workouts || [];
 
-  // SABUK PENGAMAN 1: Pake fungsi di dalem useState biar nilainya dikunci kuat-kuat
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
 
-  // SABUK PENGAMAN 2: Validasi ganda biar currentDate ga pernah undefined
   const safeDate = (currentDate instanceof Date && !isNaN(currentDate.getTime())) 
     ? currentDate 
     : new Date();
@@ -233,24 +242,21 @@ const StreakCalendar = () => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
 
-  // Bikin nama bulan manual biar aman di semua browser
   const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
   const monthName = `${monthNames[month]} ${year}`;
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
-  // SABUK PENGAMAN 3: Bungkus filter pake useMemo dan try-catch
   const workoutDays = useMemo(() => {
     if (!Array.isArray(workouts)) return new Set();
 
     return new Set(
       workouts
         .filter((w) => {
-          if (!w || !w.date) return false; // Tendang kalo datanya cacat
+          if (!w || !w.date) return false;
           try {
             const wDate = new Date(w.date);
-            // Kalo tangganya ga valid, isNaN bakal nangkep dan nendang datanya
             if (!(wDate instanceof Date) || isNaN(wDate.getTime())) return false;
             return wDate.getMonth() === month && wDate.getFullYear() === year;
           } catch (err) {
@@ -267,7 +273,6 @@ const StreakCalendar = () => {
     );
   }, [workouts, month, year]);
 
-  // SABUK PENGAMAN 4: Validasi realToday
   const realToday = new Date();
   const safeToday = (realToday instanceof Date && !isNaN(realToday.getTime())) 
     ? realToday 
