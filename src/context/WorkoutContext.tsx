@@ -38,8 +38,8 @@ const WorkoutCtx = createContext<WorkoutContextType | null>(null);
 
 export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [streak, setStreak] = useState(365);
-  const [totalWorkouts, setTotalWorkouts] = useState(743);
+  const [streak, setStreak] = useState(167);
+  const [totalWorkouts, setTotalWorkouts] = useState(234);
 
   // Penghitung Total Volume Otomatis
   const dynamicTotalVolume = useMemo(() => {

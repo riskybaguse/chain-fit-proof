@@ -12,29 +12,16 @@ const shortAddr = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 
 type MemberStatus = "ACTIVE" | "INACTIVE" | "EXPIRING SOON";
 
-const members: {
-  wallet: string;
-  joinDate: string;
-  streak: number;
-  lastActive: string;
-  status: MemberStatus;
-}[] = [
-  { wallet: "7xKm9pQrAv3Z2BcF", joinDate: "2025-11-14", streak: 187, lastActive: "2h ago", status: "ACTIVE" },
-  { wallet: "8E5d2A1bXyZ7HjKp", joinDate: "2025-09-02", streak: 142, lastActive: "5h ago", status: "ACTIVE" },
-  { wallet: "3F9c7E2aQwR1MnLo", joinDate: "2026-01-18", streak: 47, lastActive: "1d ago", status: "EXPIRING SOON" },
-  { wallet: "1A2b9F4cDeGhJkLm", joinDate: "2025-08-22", streak: 91, lastActive: "3h ago", status: "ACTIVE" },
-  { wallet: "5T7yU8iO9pAsDfGh", joinDate: "2025-12-05", streak: 0, lastActive: "21d ago", status: "INACTIVE" },
-  { wallet: "9Zx2C4vB6nM8aSdF", joinDate: "2026-02-11", streak: 28, lastActive: "6h ago", status: "ACTIVE" },
-  { wallet: "4Q1wE3rT5yU7iO9p", joinDate: "2025-10-30", streak: 64, lastActive: "1d ago", status: "EXPIRING SOON" },
-  { wallet: "6H8jK0lP2oI4uY6t", joinDate: "2025-07-19", streak: 0, lastActive: "45d ago", status: "INACTIVE" },
-];
-
-const topMembers = [
-  { wallet: "7xKm9pQrAv3Z2BcF", streak: 187, workouts: 42 },
-  { wallet: "8E5d2A1bXyZ7HjKp", streak: 142, workouts: 38 },
-  { wallet: "1A2b9F4cDeGhJkLm", streak: 91, workouts: 31 },
-  { wallet: "9Zx2C4vB6nM8aSdF", streak: 28, workouts: 24 },
-  { wallet: "3F9c7E2aQwR1MnLo", streak: 47, workouts: 22 },
+// TWEAK 1: Nambahin properti "workouts" biar Leaderboard bawah nggak error undefined
+const defaultMembers = [
+  { wallet: "7xKm9pQrAv3Z2BcF", joinDate: "2025-11-14", streak: 187, workouts: 210, lastActive: "2h ago", status: "ACTIVE" as MemberStatus },
+  { wallet: "8E5d2A1bXyZ7HjKp", joinDate: "2025-09-02", streak: 142, workouts: 156, lastActive: "5h ago", status: "ACTIVE" as MemberStatus },
+  { wallet: "3F9c7E2aQwR1MnLo", joinDate: "2026-01-18", streak: 47, workouts: 52, lastActive: "1d ago", status: "EXPIRING SOON" as MemberStatus },
+  { wallet: "1A2b9F4cDeGhJkLm", joinDate: "2025-08-22", streak: 91, workouts: 104, lastActive: "3h ago", status: "ACTIVE" as MemberStatus },
+  { wallet: "5T7yU8iO9pAsDfGh", joinDate: "2025-12-05", streak: 0, workouts: 12, lastActive: "21d ago", status: "INACTIVE" as MemberStatus },
+  { wallet: "9Zx2C4vB6nM8aSdF", joinDate: "2026-02-11", streak: 28, workouts: 30, lastActive: "6h ago", status: "ACTIVE" as MemberStatus },
+  { wallet: "4Q1wE3rT5yU7iO9p", joinDate: "2025-10-30", streak: 64, workouts: 70, lastActive: "1d ago", status: "EXPIRING SOON" as MemberStatus },
+  { wallet: "6H8jK0lP2oI4uY6t", joinDate: "2025-07-19", streak: 0, workouts: 5, lastActive: "45d ago", status: "INACTIVE" as MemberStatus },
 ];
 
 const statusStyles: Record<MemberStatus, string> = {
@@ -46,7 +33,70 @@ const statusStyles: Record<MemberStatus, string> = {
 const OwnerDashboard = () => {
   const { t, lang } = useLang();
   const [query, setQuery] = useState("");
-  const filtered = members.filter((m) => m.wallet.toLowerCase().includes(query.toLowerCase()));
+
+  const [members, setMembers] = useState(() => {
+    const saved = localStorage.getItem('gainchain_owner_members');
+    return saved ? JSON.parse(saved) : defaultMembers;
+  });
+
+  const handleRemove = (wallet: string) => {
+    const updated = members.filter((m: any) => m.wallet !== wallet);
+    setMembers(updated);
+    localStorage.setItem('gainchain_owner_members', JSON.stringify(updated));
+  };
+
+  const handleExport = () => {
+    const headers = "Wallet,Join Date,Streak,Workouts,Last Active,Status";
+    const rows = members.map((m: any) => 
+      `${m.wallet},${m.joinDate},${m.streak}d,${m.workouts},${m.lastActive},${m.status}`
+    );
+    const csv = [headers, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'gainchain-members.csv';
+    a.click();
+  };
+
+  // TWEAK 2: Bikin array config Quick Actions yang bersih, setiap tombol punya Action (onClick)
+  const quickActions = [
+    { 
+      icon: QrCode, 
+      title: lang === "id" ? "Undang Member Baru" : "Invite New Member", 
+      desc: lang === "id" ? "Buat QR code & link undangan" : "Generate QR code & invite link",
+      action: () => alert(lang === "id" ? "Fitur Undang Member segera hadir!" : "Invite Member coming soon!")
+    },
+    { 
+      icon: Award, 
+      title: lang === "id" ? "Terbitkan Membership NFT" : "Issue Membership NFT", 
+      desc: lang === "id" ? "Mint smart membership on-chain" : "Mint smart membership on-chain",
+      action: () => alert(lang === "id" ? "Fitur Minting NFT segera hadir!" : "NFT Minting coming soon!")
+    },
+    { 
+      icon: Swords, 
+      title: lang === "id" ? "Buat Challenge" : "Create Challenge", 
+      desc: lang === "id" ? "Buat kompetisi antar member" : "Create competition between members",
+      action: () => alert(lang === "id" ? "Fitur Challenge segera hadir!" : "Challenges coming soon!")
+    },
+    { 
+      icon: Download, 
+      title: lang === "id" ? "Ekspor Data Member" : "Export Member Data", 
+      desc: lang === "id" ? "Unduh CSV semua aktivitas" : "Download CSV of all activity",
+      action: handleExport // <--- Langsung eksekusi download CSV beneran
+    },
+  ];
+
+  const topMembers = [...members]
+    .sort((a, b) => b.streak - a.streak)
+    .slice(0, 5);
+
+  const totalMembers = members.length;
+  const activeToday = members.filter(m => m.status === "ACTIVE").length;
+
+  const filtered = members.filter((m) =>
+    m.wallet.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -54,7 +104,7 @@ const OwnerDashboard = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">{t("owner.title")}</h1>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">{t("owner.title") || "Owner Dashboard"}</h1>
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-mono font-bold tracking-widest border"
               style={{
@@ -72,17 +122,17 @@ const OwnerDashboard = () => {
             IRON FORGE GYM • <span style={{ color: "hsl(270 90% 75%)" }}>0xGym...4f2A</span>
           </p>
         </div>
-        <Button variant="owner">
+        <Button variant="owner" onClick={() => alert(lang === "id" ? "Quick Action Owner ditekan!" : "Owner Quick Action clicked!")}>
           <Plus className="h-4 w-4" />
-          {t("owner.quickAction")}
+          {t("owner.quickAction") || "Quick Action"}
         </Button>
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: Users, label: "Total Members", value: "48", unit: lang === "id" ? "Member" : "Members", sub: lang === "id" ? "+3 minggu ini" : "+3 this week", subColor: "text-primary" },
-          { icon: Activity, label: "Active Today", value: "12", unit: "Athletes", sub: lang === "id" ? "25% dari member" : "25% of members", subColor: "text-muted-foreground" },
+          { icon: Users, label: "Total Members", value: totalMembers.toString(), unit: lang === "id" ? "Member" : "Members", sub: lang === "id" ? "+3 minggu ini" : "+3 this week", subColor: "text-primary" },
+          { icon: Activity, label: "Active Today", value: activeToday.toString(), unit: "Athletes", sub: lang === "id" ? `${Math.round((activeToday / (totalMembers || 1)) * 100)}% dari member` : `${Math.round((activeToday / (totalMembers || 1)) * 100)}% of members`, subColor: "text-muted-foreground" },
           { icon: Coins, label: "Revenue", value: "2.4", unit: "SOL", sub: "This month", subColor: "text-muted-foreground" },
           { icon: Swords, label: "Challenges Active", value: "2", unit: lang === "id" ? "Berjalan" : "Running", sub: lang === "id" ? "1 segera berakhir" : "1 ending soon", subColor: "text-warning" },
         ].map((s) => (
@@ -119,15 +169,15 @@ const OwnerDashboard = () => {
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="p-5 flex flex-wrap items-center justify-between gap-3 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold">{t("owner.memberManagement")}</h2>
-            <p className="text-xs text-muted-foreground">{t("owner.memberManagementSub")}</p>
+            <h2 className="text-lg font-bold">{t("owner.memberManagement") || "Member Management"}</h2>
+            <p className="text-xs text-muted-foreground">{t("owner.memberManagementSub") || "Manage and monitor your gym members"}</p>
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("owner.searchWallet")}
+              placeholder={t("owner.searchWallet") || "Search wallet address..."}
               className="pl-9 h-9 text-sm font-mono"
             />
           </div>
@@ -178,14 +228,20 @@ const OwnerDashboard = () => {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1.5">
-                      <Button size="sm" variant="outline" className="h-7 text-[11px]">
+                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => alert(lang === "id" ? "Fitur perpanjang segera hadir" : "Renew coming soon")}>
                         <RefreshCw className="h-3 w-3" /> {lang === "id" ? "Perpanjang" : "Renew"}
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-7 text-[11px]">
+                      <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => alert(lang === "id" ? "Fitur pesan segera hadir" : "Message coming soon")}>
                         <MessageSquare className="h-3 w-3" /> {lang === "id" ? "Pesan" : "Message"}
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-7 text-[11px] text-danger hover:text-danger">
-                        <Trash2 className="h-3 w-3" /> {lang === "id" ? "Hapus" : "Remove"}
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="h-7 text-[11px] text-danger hover:text-danger hover:bg-danger/10"
+                        onClick={() => handleRemove(m.wallet)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        {lang === "id" ? "Hapus" : "Remove"}
                       </Button>
                     </div>
                   </td>
@@ -194,7 +250,7 @@ const OwnerDashboard = () => {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center py-10 text-sm text-muted-foreground">
-                    {t("owner.noMember")}
+                    {t("owner.noMember") || "No members found."}
                   </td>
                 </tr>
               )}
@@ -206,16 +262,12 @@ const OwnerDashboard = () => {
       {/* Quick Actions + Mini Leaderboard */}
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-bold">{t("owner.quickActions")}</h2>
+          <h2 className="text-lg font-bold">{t("owner.quickActions") || "Quick Actions"}</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            {[
-              { icon: QrCode, title: lang === "id" ? "Undang Member Baru" : "Invite New Member", desc: lang === "id" ? "Buat QR code & link undangan" : "Generate QR code & invite link" },
-              { icon: Award, title: lang === "id" ? "Terbitkan Membership NFT" : "Issue Membership NFT", desc: lang === "id" ? "Mint smart membership on-chain" : "Mint smart membership on-chain" },
-              { icon: Swords, title: lang === "id" ? "Buat Challenge" : "Create Challenge", desc: lang === "id" ? "Buat kompetisi antar member" : "Create competition between members" },
-              { icon: Download, title: lang === "id" ? "Ekspor Data Member" : "Export Member Data", desc: lang === "id" ? "Unduh CSV semua aktivitas" : "Download CSV of all activity" },
-            ].map((a) => (
+            {quickActions.map((a) => (
               <button
                 key={a.title}
+                onClick={a.action} // TWEAK 4: Manggil eksekusi aksi dari config
                 className="text-left rounded-2xl border border-border bg-card p-5 hover:-translate-y-1 transition-all group"
                 style={{ transitionProperty: "transform, border-color, box-shadow" }}
                 onMouseEnter={(e) => {
@@ -228,12 +280,12 @@ const OwnerDashboard = () => {
                 }}
               >
                 <div
-                  className="h-11 w-11 rounded-xl flex items-center justify-center mb-4 border"
+                  className="h-11 w-11 rounded-xl flex items-center justify-center mb-4 border transition-colors group-hover:bg-primary/10"
                   style={{ background: "hsl(270 90% 65% / 0.12)", borderColor: "hsl(270 90% 65% / 0.35)" }}
                 >
                   <a.icon className="h-5 w-5" style={{ color: "hsl(270 90% 75%)" }} />
                 </div>
-                <h3 className="font-bold text-sm mb-1">{a.title}</h3>
+                <h3 className="font-bold text-sm mb-1 group-hover:text-primary transition-colors">{a.title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{a.desc}</p>
               </button>
             ))}
@@ -246,24 +298,24 @@ const OwnerDashboard = () => {
             <div>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-accent" />
-                {t("owner.gymLeaderboard")}
+                {t("owner.gymLeaderboard") || "Gym Leaderboard"}
               </h2>
-              <p className="text-xs text-muted-foreground">{t("owner.top5Month")}</p>
+              <p className="text-xs text-muted-foreground">{t("owner.top5Month") || "Top 5 Members"}</p>
             </div>
           </div>
           <ol className="space-y-2">
             {topMembers.map((m, i) => (
               <li
                 key={m.wallet}
-                className="flex items-center gap-3 rounded-xl border border-border bg-background/60 p-3"
+                className="flex items-center gap-3 rounded-xl border border-border bg-background/60 p-3 hover:bg-secondary/40 transition-colors"
               >
                 <span
                   className={cn(
-                    "h-7 w-7 shrink-0 rounded-full flex items-center justify-center font-mono text-xs font-extrabold",
+                    "h-7 w-7 shrink-0 rounded-full flex items-center justify-center font-mono text-xs font-extrabold shadow-glow-soft",
                     i === 0 ? "bg-gradient-gold text-accent-foreground" :
-                    i === 1 ? "bg-gradient-silver text-background" :
-                    i === 2 ? "bg-gradient-bronze text-white" :
-                    "bg-secondary text-muted-foreground",
+                      i === 1 ? "bg-gradient-silver text-background" :
+                        i === 2 ? "bg-gradient-bronze text-white" :
+                          "bg-secondary text-muted-foreground border border-border",
                   )}
                 >
                   {i + 1}
@@ -271,7 +323,7 @@ const OwnerDashboard = () => {
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-xs text-foreground truncate">{shortAddr(m.wallet)}</div>
                   <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground mt-0.5">
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 font-bold">
                       <Flame className="h-3 w-3 text-primary" />
                       {m.streak}d
                     </span>

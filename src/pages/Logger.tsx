@@ -235,7 +235,7 @@ const Logger = () => {
               const typeData = types.find(t => t.key === w.type);
 
               // Kalo kosong, kasih teks default "Pending..."
-              const validTx = w.txHash || w.tx || "Pending...";
+              const validTx = w.txHash || "Pending...";
 
               // Potong txHash cuma kalo panjangnya lebih dari 8 karakter
               const displayTx = validTx.length > 8
