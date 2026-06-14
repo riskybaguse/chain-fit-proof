@@ -23,6 +23,7 @@ type WorkoutContextType = {
   workouts: Workout[];
   streak: number;
   totalVolume: string;
+  totalVolumeKg: number;
   totalWorkouts: number;
   addWorkout: (w: Omit<Workout, "id" | "txHash" | "status">) => void;
 };
@@ -42,27 +43,25 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   const [totalWorkouts, setTotalWorkouts] = useState(234);
 
   // Penghitung Total Volume Otomatis
-  const dynamicTotalVolume = useMemo(() => {
+  const { formatted: dynamicTotalVolume, rawKg: totalVolumeKg } = useMemo(() => {
     let total = 0;
     
-    // Looping semua history latihan
     workouts.forEach((w) => {
       if (w.exercises && Array.isArray(w.exercises)) {
-        // Looping setiap gerakan di dalam 1 latihan
         w.exercises.forEach((ex) => {
           const sets = parseInt(ex.sets) || 0;
           const reps = parseInt(ex.reps) || 0;
           const weight = parseFloat(ex.weight) || 0;
-          
-          // Rumus Gym: Volume = Sets x Reps x Berat Beban
           total += sets * reps * weight;
         });
       }
     });
 
-    // Format angkanya biar ada koma ribuan (contoh: 2560 jadi "2,560")
-    return total.toLocaleString("en-US");
-  }, [workouts]); // Akan ngitung ulang tiap kali isi history workouts berubah
+    return {
+      formatted: total.toLocaleString("en-US"),
+      rawKg: total,
+    };
+  }, [workouts]);
 
   // Pas aplikasi diload, cek apakah udah ada data di memori browser
   useEffect(() => {
@@ -127,7 +126,7 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   
 
   return (
-    <WorkoutCtx.Provider value={{ workouts, streak, totalWorkouts, totalVolume: dynamicTotalVolume, addWorkout }}>
+    <WorkoutCtx.Provider value={{ workouts, streak, totalWorkouts, totalVolume: dynamicTotalVolume, totalVolumeKg, addWorkout }}>
       {children}
     </WorkoutCtx.Provider>
   );

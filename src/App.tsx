@@ -17,6 +17,7 @@ import { RoleProvider } from "./context/RoleContext";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import { SolanaProvider } from "./context/SolanaProvider";
 import { WorkoutProvider } from "./context/WorkoutContext.tsx";
+import { UserProvider } from "./context/UserContext";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
       <LanguageProvider>
         <RoleProvider>
           <WorkoutProvider>
+            <UserProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
@@ -47,6 +49,7 @@ const App = () => (
                 </RouteErrorBoundary>
               </BrowserRouter>
             </TooltipProvider>
+            </UserProvider>
           </WorkoutProvider>
         </RoleProvider>
       </LanguageProvider>

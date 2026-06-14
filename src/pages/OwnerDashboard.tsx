@@ -2,15 +2,32 @@ import { useState } from "react";
 import {
   Users, Activity, Coins, Swords, QrCode, Award, Plus, Download,
   Building2, Flame, Trophy, MessageSquare, RefreshCw, Trash2, Search,
+  CheckCircle2, XCircle, Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/context/LanguageContext";
+import { toast } from "sonner";
 
 const shortAddr = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 
 type MemberStatus = "ACTIVE" | "INACTIVE" | "EXPIRING SOON";
+
+type PendingClaim = {
+  id: string;
+  wallet: string;
+  event: string;
+  claim: string;
+  submittedAt: string;
+};
+
+const defaultPendingClaims: PendingClaim[] = [
+  { id: "c1", wallet: "7xKm9pQrAv3Z2BcF", event: "17 Aug Deadlift Face-off", claim: "220kg × 3 Deadlift", submittedAt: "2h ago" },
+  { id: "c2", wallet: "8E5d2A1bXyZ7HjKp", event: "17 Aug Deadlift Face-off", claim: "195kg × 5 Deadlift", submittedAt: "5h ago" },
+  { id: "c3", wallet: "3F9c7E2aQwR1MnLo", event: "24 Aug Bench Press Showdown", claim: "140kg × 2 Bench Press", submittedAt: "1d ago" },
+  { id: "c4", wallet: "1A2b9F4cDeGhJkLm", event: "17 Aug Deadlift Face-off", claim: "250kg × 1 Deadlift", submittedAt: "3h ago" },
+];
 
 // TWEAK 1: Nambahin properti "workouts" biar Leaderboard bawah nggak error undefined
 const defaultMembers = [
@@ -38,6 +55,28 @@ const OwnerDashboard = () => {
     const saved = localStorage.getItem('gainchain_owner_members');
     return saved ? JSON.parse(saved) : defaultMembers;
   });
+
+  const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>(() => {
+    const saved = localStorage.getItem('gainchain_owner_claims');
+    return saved ? JSON.parse(saved) : defaultPendingClaims;
+  });
+
+  const handleApproveClaim = (id: string) => {
+    const claim = pendingClaims.find((c) => c.id === id);
+    const updated = pendingClaims.filter((c) => c.id !== id);
+    setPendingClaims(updated);
+    localStorage.setItem('gainchain_owner_claims', JSON.stringify(updated));
+    toast.success(t("owner.approveSuccess"), {
+      description: claim ? `${shortAddr(claim.wallet)} — ${claim.claim}` : undefined,
+    });
+  };
+
+  const handleRejectClaim = (id: string) => {
+    const updated = pendingClaims.filter((c) => c.id !== id);
+    setPendingClaims(updated);
+    localStorage.setItem('gainchain_owner_claims', JSON.stringify(updated));
+    toast.error(t("owner.rejectSuccess"));
+  };
 
   const handleRemove = (wallet: string) => {
     const updated = members.filter((m: any) => m.wallet !== wallet);
@@ -163,6 +202,82 @@ const OwnerDashboard = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Pending Challenge Claims */}
+      <div className="rounded-2xl border bg-card overflow-hidden" style={{ borderColor: "hsl(270 90% 65% / 0.25)" }}>
+        <div className="p-5 border-b border-border flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Clock className="h-4 w-4" style={{ color: "hsl(270 90% 75%)" }} />
+              {t("owner.pendingClaims")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("owner.pendingClaimsSub")}</p>
+          </div>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-mono font-bold border"
+            style={{
+              background: "hsl(270 90% 65% / 0.12)",
+              borderColor: "hsl(270 90% 65% / 0.35)",
+              color: "hsl(270 90% 80%)",
+            }}
+          >
+            {pendingClaims.length} pending
+          </span>
+        </div>
+        <div className="divide-y divide-border">
+          {pendingClaims.length === 0 ? (
+            <div className="p-10 text-center text-sm text-muted-foreground font-mono">
+              No pending claims — all validated!
+            </div>
+          ) : (
+            pendingClaims.map((claim) => (
+              <div
+                key={claim.id}
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-secondary/30 transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center font-mono text-xs font-bold text-white"
+                    style={{ background: "var(--gradient-owner)" }}
+                  >
+                    {claim.wallet.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="font-mono text-xs">{shortAddr(claim.wallet)}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-secondary border border-border">
+                        {claim.submittedAt}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold">{claim.event}</p>
+                    <p className="text-xs text-primary font-mono mt-0.5">{claim.claim}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs border-primary/40 text-primary hover:bg-primary/10"
+                    onClick={() => handleApproveClaim(claim.id)}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {t("owner.approve")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 text-xs text-danger hover:text-danger hover:bg-danger/10"
+                    onClick={() => handleRejectClaim(claim.id)}
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    {t("owner.reject")}
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Member Management */}

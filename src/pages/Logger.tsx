@@ -1,16 +1,26 @@
 import { useState } from "react";
-import { Plus, Trash2, CheckCircle2, Loader2, Calendar } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, Loader2, Calendar, Share2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/context/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useWorkout } from "@/context/WorkoutContext";
+import { useUser } from "@/context/UserContext";
 
 type WorkoutType = "PUSH" | "PULL" | "LEG" | "CUSTOM";
+type LiftType = "squat" | "bench" | "deadlift";
 
 interface Exercise { id: number; name: string; sets: string; reps: string; weight: string }
 
@@ -21,10 +31,41 @@ const types: { key: WorkoutType; emoji: string; label: string }[] = [
   { key: "CUSTOM", emoji: "⚙️", label: "Custom" },
 ];
 
+const calcOneRepMax = (weight: number, reps: number) =>
+  weight / (1.0278 - 0.0278 * reps);
+
+const getLiftType = (name: string): LiftType => {
+  const lower = name.toLowerCase();
+  if (lower.includes("squat")) return "squat";
+  if (lower.includes("bench")) return "bench";
+  if (lower.includes("deadlift") || lower.includes("dead lift")) return "deadlift";
+  return "deadlift";
+};
+
+const getEliteLimit = (lift: LiftType, bodyWeight: number) => {
+  const multipliers: Record<LiftType, number> = { squat: 2.5, bench: 2.0, deadlift: 3.0 };
+  return bodyWeight * multipliers[lift];
+};
+
+const validateExercises = (exercises: Exercise[], bodyWeight: number | null): boolean => {
+  if (!bodyWeight) return true;
+  for (const ex of exercises) {
+    const weight = parseFloat(ex.weight);
+    const reps = parseInt(ex.reps);
+    if (!weight || !reps || reps <= 0) continue;
+    const oneRepMax = calcOneRepMax(weight, reps);
+    const lift = getLiftType(ex.name);
+    const limit = getEliteLimit(lift, bodyWeight);
+    if (oneRepMax > limit) return false;
+  }
+  return true;
+};
+
 const Logger = () => {
   const { t } = useLang();
   const navigate = useNavigate();
-  const { addWorkout, workouts } = useWorkout(); // narik fitur
+  const { addWorkout, workouts } = useWorkout();
+  const { bodyWeight } = useUser();
   const [type, setType] = useState<WorkoutType>("PUSH");
   const [customName, setCustomName] = useState("");
   const [date] = useState(new Date().toISOString().slice(0, 10));
@@ -35,6 +76,7 @@ const Logger = () => {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [filter, setFilter] = useState<"ALL" | WorkoutType>("ALL");
+  const [peerModalOpen, setPeerModalOpen] = useState(false);
 
   const addExercise = () => setExercises((arr) => [...arr, { id: Date.now(), name: "", sets: "", reps: "", weight: "" }]);
   const remove = (id: number) => setExercises((arr) => arr.filter((e) => e.id !== id));
@@ -42,9 +84,13 @@ const Logger = () => {
     setExercises((arr) => arr.map((e) => (e.id === id ? { ...e, [k]: v } : e)));
 
   const submit = async () => {
-    // Validasi kecil biar ga submit kosong
     if (exercises.length === 0 || exercises[0].name === "") {
       toast.error("Masukin minimal 1 latihan dong bre!");
+      return;
+    }
+
+    if (!validateExercises(exercises, bodyWeight)) {
+      toast.error(t("logger.error.cbum"));
       return;
     }
 
@@ -73,6 +119,14 @@ const Logger = () => {
   };
 
   const filtered = workouts.filter((h) => filter === "ALL" || h.type === filter);
+  const validationLink = `https://gainchain.app/validate/${Date.now().toString(36)}`;
+
+  const handleWhatsAppShare = () => {
+    const text = encodeURIComponent(
+      `GainChain Peer-Validation: Please verify my lift! ${validationLink}`,
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -182,6 +236,17 @@ const Logger = () => {
               </>
             )}
           </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full border-primary/40 text-primary hover:bg-primary/5"
+            onClick={() => setPeerModalOpen(true)}
+            disabled={submitting}
+          >
+            <Users className="h-4 w-4" />
+            {t("logger.peerValidation")}
+          </Button>
         </div>
 
         {/* Side panel */}
@@ -205,6 +270,54 @@ const Logger = () => {
           </div>
         </div>
       </div>
+
+      {/* Peer-Validation Modal */}
+      <Dialog open={peerModalOpen} onOpenChange={setPeerModalOpen}>
+        <DialogContent className="sm:max-w-md border-primary/30 bg-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              {t("logger.peerValidation.title")}
+            </DialogTitle>
+            <DialogDescription>{t("logger.peerValidation.desc")}</DialogDescription>
+          </DialogHeader>
+
+          <Badge className="w-fit bg-primary/10 text-primary border border-primary/30 font-mono text-xs">
+            {t("logger.peerValidation.badge")}
+          </Badge>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+              {t("logger.peerValidation.link")}
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={validationLink}
+                className="font-mono text-xs bg-background border-border"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  navigator.clipboard.writeText(validationLink);
+                  toast.success("Link copied!");
+                }}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <Button
+            className="w-full bg-[#25D366] hover:bg-[#25D366]/90 text-white"
+            onClick={handleWhatsAppShare}
+          >
+            <Share2 className="h-4 w-4" />
+            {t("logger.peerValidation.share")}
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {/* History */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">

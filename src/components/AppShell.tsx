@@ -8,8 +8,11 @@ import { useLang } from "@/context/LanguageContext";
 import { useRole, ROLE_META } from "@/context/RoleContext";
 import { useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { CalibrationModal } from "./CalibrationModal";
+import { DemoKillswitch } from "./DemoKillswitch";
+import { useUser } from "@/context/UserContext";
 
-const WALLET = "7xKm9pQrAv3Z2BcFDeGhJkLmNoPq8sTuVwXyZ12345";
+const MOCK_WALLET_FALLBACK = "7xKm9pQrAv3Z2BcFDeGhJkLmNoPq8sTuVwXyZ12345";
 const shortAddr = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 
 export const AppShell = () => {
@@ -17,8 +20,10 @@ export const AppShell = () => {
   const { t } = useLang();
   const { role } = useRole();
 
-  // ambil fungsi disconnect dan status connect dari solana
-  const { disconnect, connected } = useWallet();
+  const { disconnect, connected, publicKey } = useWallet();
+  const { isCalibrated } = useUser();
+  const walletDisplay = publicKey?.toBase58() ?? MOCK_WALLET_FALLBACK;
+  const needsCalibration = connected && !isCalibrated;
 
   // proteksi rute: jika disconnected, redirect ke landing
   useEffect(() => {
@@ -89,7 +94,7 @@ export const AppShell = () => {
             <LanguageToggle />
             <div className="hidden sm:flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5">
               <Wallet className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-mono text-foreground">{shortAddr(WALLET)}</span>
+              <span className="text-xs font-mono text-foreground">{shortAddr(walletDisplay)}</span>
               <span
                 className={cn(
                   "text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded border ml-1",
@@ -102,6 +107,7 @@ export const AppShell = () => {
                 4.27 SOL
               </span>
             </div>
+            <DemoKillswitch variant="inline" />
             <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Disconnect">
               <LogOut className="h-4 w-4" />
             </Button>
@@ -143,12 +149,15 @@ export const AppShell = () => {
           </div>
         </div>
       </header>
-      <main className="container py-8">
+      <main className={cn("container py-8", needsCalibration && "pointer-events-none select-none opacity-40 blur-[2px]")}>
         <Outlet />
       </main>
+
+      <CalibrationModal open={needsCalibration} />
+      <DemoKillswitch variant="fab" />
     </div>
   );
 };
 
-export const MOCK_WALLET = WALLET;
+export const MOCK_WALLET = MOCK_WALLET_FALLBACK;
 export const formatAddr = shortAddr;

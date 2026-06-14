@@ -82,6 +82,7 @@ export default {
         'gradient-bronze': 'var(--gradient-bronze)',
         'gradient-silver': 'var(--gradient-silver)',
         'gradient-diamond': 'var(--gradient-diamond)',
+        'gradient-platinum': 'var(--gradient-platinum)',
         'gradient-owner': 'var(--gradient-owner)',
       },
       boxShadow: {

@@ -1,7 +1,7 @@
 import { Trophy, Medal, Crown, Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type BadgeTier = "bronze" | "silver" | "gold" | "diamond";
+export type BadgeTier = "bronze" | "silver" | "gold" | "platinum" | "diamond";
 
 interface NFTBadgeProps {
   tier: BadgeTier;
@@ -28,6 +28,12 @@ const tierConfig: Record<BadgeTier, { gradient: string; glow: string; icon: type
     glow: "shadow-glow-gold",
     icon: Crown,
     ring: "ring-[hsl(51_100%_50%/0.4)]",
+  },
+  platinum: {
+    gradient: "bg-gradient-platinum",
+    glow: "shadow-[0_0_35px_hsl(210_40%_75%/0.55)]",
+    icon: Trophy,
+    ring: "ring-[hsl(210_40%_75%/0.4)]",
   },
   diamond: {
     gradient: "bg-gradient-diamond",
