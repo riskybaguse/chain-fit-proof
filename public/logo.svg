@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Background, Border, dan Shadow (Mirip bg-primary/10 dan border-primary/30) -->
+  <rect x="32" y="32" width="448" height="448" rx="110" fill="rgba(34, 197, 94, 0.1)" stroke="rgba(34, 197, 94, 0.3)" stroke-width="12" />
+
+  <!-- Grup utama untuk menengahkan (center) konten ke tengah kanvas 512x512 -->
+  <g transform="translate(256, 256)">
+
+    <!-- Ikon Link / Rantai (Opacity 60%, Rotasi 45 derajat) -->
+    <g transform="scale(9) rotate(45) translate(-12, -12)" opacity="0.6" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+    </g>
+
+    <!-- Ikon Dumbbell (Rotasi -12 derajat) -->
+    <g transform="scale(9) rotate(-12) translate(-12, -12)" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14.4 14.4 9.6 9.6"></path>
+      <path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"></path>
+      <path d="m21.5 21.5-1.4-1.4"></path>
+      <path d="M3.9 3.9 2.5 2.5"></path>
+      <path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"></path>
+    </g>
+
+  </g>
+</svg>
